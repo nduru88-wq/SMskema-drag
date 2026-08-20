@@ -15,3 +15,9 @@ Brug:
 5. Tryk "Gem skema".
 
 Data gemmes i browserens localStorage.
+
+
+## Opdatering v2
+- Slet-krydset på skemaaktiviteter ligger nu nederst til højre.
+- Hver fagblok i fagbanken har ✎ til navn og 🎨 til farve.
+- Ændres farven på et eksisterende fag, slår farven straks igennem på alle fagets aktiviteter i skemaet.

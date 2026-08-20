@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Byg skema</title>
+<meta name="theme-color" content="#0b63d1">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="skoleskema192.png">
+<link rel="apple-touch-icon" href="skoleskema192.png">
+<style>
+:root{
+  --blue:#0b63d1;
+  --dark:#082b63;
+  --bg:#eef4fb;
+  --line:#b7c6da;
+  --slot-h:54px;
+  --time-w:74px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;font-family:Arial,sans-serif;background:var(--bg);color:#10213a}
+body{touch-action:manipulation}
+.topbar{
+  position:sticky;top:0;z-index:20;
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  padding:10px 12px;background:linear-gradient(180deg,#126fdc,#0758b7);color:#fff;
+  box-shadow:0 2px 8px rgba(0,0,0,.18)
+}
+.topbar h1{font-size:1.35rem;margin:0 auto 0 0}
+.topbar button,.topbar a{
+  border:0;border-radius:10px;padding:10px 14px;font-weight:700;font-size:.95rem;
+  text-decoration:none;cursor:pointer
+}
+.back{background:#fff;color:var(--dark)}
+.save{background:#31c66b;color:#072e17}
+.clear{background:#ffd7d7;color:#7a1010}
+.wrap{
+  display:grid;
+  grid-template-columns:260px minmax(780px,1fr);
+  gap:12px;padding:12px;align-items:start
+}
+.bank{
+  position:sticky;top:74px;background:#fff;border-radius:16px;padding:12px;
+  box-shadow:0 3px 15px rgba(20,50,90,.12);
+  max-height:calc(100vh - 90px);overflow:auto
+}
+.bank h2{margin:0 0 8px;font-size:1.15rem}
+.bank p{margin:0 0 10px;color:#56657a;font-size:.9rem;line-height:1.3}
+.new-subject{
+  display:grid;grid-template-columns:1fr auto;gap:8px;margin-bottom:10px
+}
+.new-subject input{
+  min-width:0;border:1px solid #c5d0df;border-radius:9px;padding:10px;font-size:1rem
+}
+.new-subject button{
+  border:0;border-radius:9px;background:var(--blue);color:#fff;font-weight:700;padding:0 13px
+}
+.subject-list{display:flex;flex-direction:column;gap:8px}
+.subject{
+  position:relative;
+  border-radius:12px;
+  padding:13px 82px 13px 12px;
+  font-weight:800;
+  box-shadow:0 2px 8px rgba(0,0,0,.12);
+  user-select:none;
+  touch-action:none;
+  cursor:grab;
+  border:2px solid rgba(0,0,0,.08);
+  min-height:54px;
+  display:flex;
+  align-items:center
+}
+.subject:active{cursor:grabbing}
+.subject .subject-action{
+  position:absolute;
+  top:50%;
+  transform:translateY(-50%);
+  width:32px;
+  height:32px;
+  border:0;
+  border-radius:8px;
+  background:rgba(255,255,255,.84);
+  font-weight:bold;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center
+}
+.subject .edit{right:43px}
+.subject .color-btn{right:6px}
+.help{
+  margin-top:12px;padding:10px;background:#f3f7fd;border-radius:10px;font-size:.84rem;line-height:1.35
+}
+.schedule-card{
+  background:#fff;border-radius:16px;padding:10px;box-shadow:0 3px 15px rgba(20,50,90,.12);
+  overflow:auto
+}
+.grid{
+  min-width:820px;
+  display:grid;
+  grid-template-columns:var(--time-w) repeat(5,1fr);
+  grid-template-rows:48px repeat(14,var(--slot-h));
+  position:relative
+}
+.head{
+  display:flex;align-items:center;justify-content:center;font-weight:800;
+  background:#e8f0fb;border:1px solid var(--line)
+}
+.time{
+  display:flex;align-items:flex-start;justify-content:center;
+  padding-top:5px;font-weight:700;background:#f8fafc;border:1px solid var(--line);
+  font-size:.9rem
+}
+.slot{
+  border:1px solid var(--line);background:#fff;position:relative;
+}
+.slot:nth-child(even){ }
+.slot.over{outline:4px solid #0b63d1;outline-offset:-4px;background:#e4f0ff}
+.activity{
+  z-index:5;margin:3px;border-radius:10px;padding:8px 34px 8px 8px;
+  font-weight:800;display:flex;align-items:center;justify-content:center;text-align:center;
+  box-shadow:0 2px 7px rgba(0,0,0,.18);user-select:none;touch-action:none;cursor:grab;
+  border:2px solid rgba(0,0,0,.08);overflow:hidden;line-height:1.1
+}
+.activity:active{cursor:grabbing}
+.activity small{display:block;font-weight:600;opacity:.72}
+.activity .delete{
+  position:absolute;
+  right:6px;
+  bottom:6px;
+  width:26px;
+  height:26px;
+  border:0;
+  border-radius:8px;
+  background:rgba(255,255,255,.9);
+  color:#8b1111;
+  font-size:18px;
+  line-height:1;
+  font-weight:bold;
+  cursor:pointer;
+  box-shadow:0 1px 4px rgba(0,0,0,.18)
+}
+.drag-ghost{
+  position:fixed;z-index:9999;pointer-events:none;transform:translate(-50%,-50%);
+  min-width:150px;max-width:220px;padding:12px;border-radius:12px;font-weight:800;text-align:center;
+  box-shadow:0 10px 30px rgba(0,0,0,.28);opacity:.92
+}
+.toast{
+  position:fixed;left:50%;bottom:18px;transform:translateX(-50%);
+  background:#10213a;color:#fff;padding:12px 18px;border-radius:12px;
+  box-shadow:0 4px 14px rgba(0,0,0,.25);z-index:10000;display:none;font-weight:700
+}
+.modal{
+  position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1000;display:none;
+  align-items:center;justify-content:center;padding:20px
+}
+.modal-box{
+  width:min(430px,96vw);background:#fff;border-radius:18px;padding:20px;box-shadow:0 20px 50px rgba(0,0,0,.3)
+}
+.modal-box h2{margin:0 0 14px}
+.field{margin:10px 0}
+.field label{display:block;font-weight:700;margin-bottom:5px}
+.field input[type=text]{width:100%;padding:11px;border:1px solid #bbb;border-radius:10px;font-size:1rem}
+.colors{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+.color-choice{height:38px;border-radius:9px;border:3px solid transparent;cursor:pointer}
+.color-choice.selected{border-color:#111}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap}
+.modal-actions button{border:0;border-radius:10px;padding:10px 14px;font-weight:800;cursor:pointer}
+.modal-save{background:#31c66b}.modal-cancel{background:#e7ebf1}.modal-delete{background:#ffcccc;color:#7b1010;margin-right:auto}
+.legend{font-size:.82rem;color:#637083;margin:7px 0 0}
+@media(max-width:1050px){
+  .wrap{grid-template-columns:220px minmax(760px,1fr);padding:8px;gap:8px}
+  .bank{top:66px;padding:9px}
+  :root{--slot-h:50px;--time-w:68px}
+}
+@media(max-width:800px){
+  .wrap{display:block;padding:8px}
+  .bank{position:static;max-height:none;margin-bottom:8px}
+  .subject-list{display:grid;grid-template-columns:repeat(3,1fr)}
+  .subject{min-height:52px;display:flex;align-items:center}
+  .schedule-card{border-radius:12px}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>🧩 Byg skema</h1>
+  <a class="back" href="index.html">← Til skema</a>
+  <button class="clear" id="clearBtn">Ryd skema</button>
+  <button class="save" id="saveBtn">✅ Gem skema</button>
+</div>
+
+<div class="wrap">
+  <aside class="bank">
+    <h2>Fagbank</h2>
+    <p>Træk et fag ind i skemaet. Hver række er 30 minutter. Ens fag, der ligger direkte efter hinanden, bliver automatisk samlet.</p>
+
+    <div class="new-subject">
+      <input id="quickName" type="text" placeholder="Nyt fag, fx Engelsk">
+      <button id="quickAdd">＋</button>
+    </div>
+
+    <div id="subjectList" class="subject-list"></div>
+
+    <div class="help">
+      <b>På tablet:</b> Hold fingeren på en fagblok, træk den til det ønskede felt og slip.<br><br>
+      En blok, der allerede ligger i skemaet, kan også flyttes. Tryk på det lille × nederst til højre på aktiviteten for at slette den. Brug ✎ eller 🎨 i fagbanken for at ændre navn eller farve.
+    </div>
+  </aside>
+
+  <main class="schedule-card">
+    <div id="grid" class="grid"></div>
+    <div class="legend">Skemaet går fra 08.00 til 15.00 i halve timer.</div>
+  </main>
+</div>
+
+<div id="subjectModal" class="modal">
+  <div class="modal-box">
+    <h2 id="modalTitle">Opret fag</h2>
+    <div class="field">
+      <label for="subjectName">Navn</label>
+      <input id="subjectName" type="text" maxlength="40">
+    </div>
+    <div class="field">
+      <label>Farve</label>
+      <div id="colorChoices" class="colors"></div>
+    </div>
+    <div class="modal-actions">
+      <button id="deleteSubjectBtn" class="modal-delete" style="display:none">Slet fag</button>
+      <button id="cancelModalBtn" class="modal-cancel">Annuller</button>
+      <button id="saveSubjectBtn" class="modal-save">Gem</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+const DAYS = ["Mandag","Tirsdag","Onsdag","Torsdag","Fredag"];
+const START_MIN = 8*60;
+const SLOT_MIN = 30;
+const SLOT_COUNT = 14; // 08.00-15.00
+const COLORS = ["#b9f6ca","#b7dcff","#ffd59e","#d9c2ff","#f3b3a6","#ffb6d9","#fff3a6","#d6f3ff","#e2e2e2","#c9f0d5","#ffc8a8","#cfd8ff"];
+
+const DEFAULT_SUBJECTS = [
+  {name:"Matematik", color:"#b9f6ca", type:"matematik"},
+  {name:"Puslespil", color:"#d9c2ff", type:"puslespil"},
+  {name:"KREA-værksted", color:"#ffd59e", type:"krea"},
+  {name:"Praktisk værksted", color:"#b7dcff", type:"praktisk"},
+  {name:"Historie & samfundsfag", color:"#f3b3a6", type:"historie"},
+  {name:"Friday Minds", color:"#ffb6d9", type:"friday"},
+  {name:"Fællespause", color:"#e2e2e2", type:"pause"},
+  {name:"Frokostpause", color:"#e2e2e2", type:"pause"}
+];
+
+let subjects = [];
+let activities = [];
+let editingSubjectId = null;
+let selectedColor = COLORS[0];
+let drag = null;
+
+const $ = sel => document.querySelector(sel);
+
+function uid(prefix="id"){
+  return prefix + "_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2,7);
+}
+function escapeHtml(s=""){
+  return String(s).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
+}
+function timeText(minutes){
+  const h = Math.floor(minutes/60);
+  const m = minutes%60;
+  return String(h).padStart(2,"0")+"."+String(m).padStart(2,"0");
+}
+function showToast(msg){
+  const t=$("#toast"); t.textContent=msg; t.style.display="block";
+  clearTimeout(showToast.timer); showToast.timer=setTimeout(()=>t.style.display="none",2200);
+}
+function subjectById(id){ return subjects.find(s=>s.id===id); }
+
+function loadState(){
+  const saved = localStorage.getItem("scheduleBuilderState");
+  if(saved){
+    try{
+      const data=JSON.parse(saved);
+      subjects = Array.isArray(data.subjects) ? data.subjects : [];
+      activities = Array.isArray(data.activities) ? data.activities : [];
+      return;
+    }catch(e){}
+  }
+  subjects = DEFAULT_SUBJECTS.map((s,i)=>({id:uid("sub"), ...s}));
+  activities = [];
+}
+function persistBuilder(){
+  localStorage.setItem("scheduleBuilderState", JSON.stringify({subjects,activities}));
+}
+
+function buildGrid(){
+  const g=$("#grid");
+  g.innerHTML="";
+  g.appendChild(headCell("Tid",1));
+  DAYS.forEach((d,i)=>g.appendChild(headCell(d,i+2)));
+
+  for(let slot=0;slot<SLOT_COUNT;slot++){
+    const row=slot+2;
+    const tm=document.createElement("div");
+    tm.className="time";
+    tm.style.gridColumn="1";
+    tm.style.gridRow=String(row);
+    tm.textContent=timeText(START_MIN+slot*SLOT_MIN);
+    g.appendChild(tm);
+
+    DAYS.forEach((day,di)=>{
+      const cell=document.createElement("div");
+      cell.className="slot";
+      cell.dataset.day=String(di);
+      cell.dataset.slot=String(slot);
+      cell.style.gridColumn=String(di+2);
+      cell.style.gridRow=String(row);
+      g.appendChild(cell);
+    });
+  }
+  renderActivities();
+}
+function headCell(text,col){
+  const d=document.createElement("div");
+  d.className="head"; d.textContent=text;
+  d.style.gridColumn=String(col); d.style.gridRow="1";
+  return d;
+}
+
+function renderSubjects(){
+  const box=$("#subjectList"); box.innerHTML="";
+  subjects.forEach(s=>{
+    const div=document.createElement("div");
+    div.className="subject";
+    div.style.background=s.color;
+    div.dataset.subjectId=s.id;
+    div.innerHTML=`
+      <span>${escapeHtml(s.name)}</span>
+      <button class="subject-action edit" title="Rediger navn">✎</button>
+      <button class="subject-action color-btn" title="Skift farve">🎨</button>
+    `;
+    div.querySelectorAll(".subject-action").forEach(btn=>{
+      btn.addEventListener("pointerdown",e=>e.stopPropagation());
+    });
+    div.querySelector(".edit").addEventListener("click",e=>{
+      e.stopPropagation();
+      openSubjectModal(s.id, "", "name");
+    });
+    div.querySelector(".color-btn").addEventListener("click",e=>{
+      e.stopPropagation();
+      openSubjectModal(s.id, "", "color");
+    });
+    div.addEventListener("pointerdown",e=>startDragFromBank(e,s.id));
+    box.appendChild(div);
+  });
+}
+
+function normalizeActivities(list){
+  const sorted=[...list].sort((a,b)=>a.day-b.day || a.startSlot-b.startSlot);
+  const out=[];
+  for(const a of sorted){
+    const prev=out[out.length-1];
+    if(prev && prev.day===a.day && prev.subjectId===a.subjectId && prev.startSlot+prev.durationSlots===a.startSlot){
+      prev.durationSlots+=a.durationSlots;
+    }else{
+      out.push({...a});
+    }
+  }
+  return out;
+}
+
+function renderActivities(){
+  document.querySelectorAll(".activity").forEach(el=>el.remove());
+  activities = normalizeActivities(activities);
+  for(const a of activities){
+    const s=subjectById(a.subjectId);
+    if(!s) continue;
+    const el=document.createElement("div");
+    el.className="activity";
+    el.dataset.activityId=a.id;
+    el.style.background=s.color;
+    el.style.gridColumn=String(a.day+2);
+    el.style.gridRow=`${a.startSlot+2} / span ${a.durationSlots}`;
+    const start=START_MIN+a.startSlot*SLOT_MIN;
+    const end=start+a.durationSlots*SLOT_MIN;
+    el.innerHTML=`<span>${escapeHtml(s.name)}<small>${timeText(start)}–${timeText(end)}</small></span><button class="delete" title="Slet aktivitet">×</button>`;
+    el.querySelector(".delete").addEventListener("pointerdown",e=>e.stopPropagation());
+    el.querySelector(".delete").addEventListener("click",e=>{
+      e.stopPropagation();
+      activities=activities.filter(x=>x.id!==a.id);
+      persistBuilder(); renderActivities();
+    });
+    el.addEventListener("pointerdown",e=>startDragExisting(e,a.id));
+    $("#grid").appendChild(el);
+  }
+}
+
+function getSlotFromPoint(x,y){
+  const el=document.elementFromPoint(x,y);
+  const slot=el?.closest?.(".slot");
+  if(!slot) return null;
+  return {day:Number(slot.dataset.day), slot:Number(slot.dataset.slot), el:slot};
+}
+function clearOver(){ document.querySelectorAll(".slot.over").forEach(s=>s.classList.remove("over")); }
+
+function makeGhost(text,color){
+  const g=document.createElement("div");
+  g.className="drag-ghost";
+  g.textContent=text;
+  g.style.background=color;
+  document.body.appendChild(g);
+  return g;
+}
+function moveGhost(e){
+  if(!drag) return;
+  drag.ghost.style.left=e.clientX+"px";
+  drag.ghost.style.top=e.clientY+"px";
+  clearOver();
+  const hit=getSlotFromPoint(e.clientX,e.clientY);
+  if(hit) hit.el.classList.add("over");
+}
+function startDragFromBank(e,subjectId){
+  if(e.button!==undefined && e.button!==0) return;
+  const s=subjectById(subjectId); if(!s) return;
+  e.preventDefault();
+  const ghost=makeGhost(s.name,s.color);
+  drag={kind:"new",subjectId,ghost,pointerId:e.pointerId};
+  document.addEventListener("pointermove",moveGhost,{passive:false});
+  document.addEventListener("pointerup",finishDrag,{once:true});
+  moveGhost(e);
+}
+function startDragExisting(e,activityId){
+  if(e.target.closest(".delete")) return;
+  if(e.button!==undefined && e.button!==0) return;
+  const a=activities.find(x=>x.id===activityId); if(!a) return;
+  const s=subjectById(a.subjectId); if(!s) return;
+  e.preventDefault();
+  const ghost=makeGhost(s.name,s.color);
+  drag={kind:"move",activityId,subjectId:a.subjectId,durationSlots:a.durationSlots,ghost,pointerId:e.pointerId};
+  document.addEventListener("pointermove",moveGhost,{passive:false});
+  document.addEventListener("pointerup",finishDrag,{once:true});
+  moveGhost(e);
+}
+function occupied(day,start,duration,ignoreId=null){
+  const end=start+duration;
+  return activities.some(a=>{
+    if(a.id===ignoreId || a.day!==day) return false;
+    const aEnd=a.startSlot+a.durationSlots;
+    return start<aEnd && end>a.startSlot;
+  });
+}
+function finishDrag(e){
+  document.removeEventListener("pointermove",moveGhost);
+  clearOver();
+  if(!drag) return;
+  const d=drag; drag=null;
+  d.ghost.remove();
+  const hit=getSlotFromPoint(e.clientX,e.clientY);
+  if(!hit) return;
+
+  if(d.kind==="new"){
+    if(occupied(hit.day,hit.slot,1)){ showToast("Feltet er allerede optaget"); return; }
+    activities.push({id:uid("act"),subjectId:d.subjectId,day:hit.day,startSlot:hit.slot,durationSlots:1});
+  }else{
+    const a=activities.find(x=>x.id===d.activityId); if(!a) return;
+    const dur=a.durationSlots;
+    if(hit.slot+dur>SLOT_COUNT){ showToast("Blokken kan ikke være der"); return; }
+    if(occupied(hit.day,hit.slot,dur,a.id)){ showToast("Der er ikke plads til hele blokken"); return; }
+    a.day=hit.day; a.startSlot=hit.slot;
+  }
+  activities=normalizeActivities(activities);
+  persistBuilder(); renderActivities();
+}
+
+function openSubjectModal(id=null, presetName="", focusMode="name"){
+  editingSubjectId=id;
+  const s=id?subjectById(id):null;
+  $("#modalTitle").textContent=s
+    ? (focusMode==="color" ? "Skift farve" : "Rediger fag")
+    : "Opret fag";
+  $("#subjectName").value=s?s.name:presetName;
+  selectedColor=s?s.color:COLORS[subjects.length%COLORS.length];
+  $("#deleteSubjectBtn").style.display=s?"block":"none";
+  renderColorChoices();
+  $("#subjectModal").style.display="flex";
+  setTimeout(()=>{
+    if(focusMode==="name"){
+      $("#subjectName").focus();
+      $("#subjectName").select();
+    }
+  },30);
+}
+function closeModal(){ $("#subjectModal").style.display="none"; editingSubjectId=null; }
+function renderColorChoices(){
+  const box=$("#colorChoices"); box.innerHTML="";
+  COLORS.forEach(c=>{
+    const b=document.createElement("button");
+    b.className="color-choice"+(c===selectedColor?" selected":"");
+    b.style.background=c; b.title=c;
+    b.addEventListener("click",()=>{
+      selectedColor=c;
+      renderColorChoices();
+
+      if(editingSubjectId){
+        const s=subjectById(editingSubjectId);
+        if(s){
+          s.color=selectedColor;
+          persistBuilder();
+          renderSubjects();
+          renderActivities();
+        }
+      }
+    });
+    box.appendChild(b);
+  });
+}
+function saveSubject(){
+  const name=$("#subjectName").value.trim();
+  if(!name){showToast("Skriv et navn");return;}
+  if(editingSubjectId){
+    const s=subjectById(editingSubjectId); if(s){s.name=name;s.color=selectedColor;}
+  }else{
+    subjects.push({id:uid("sub"),name,color:selectedColor,type:"default"});
+  }
+  persistBuilder(); renderSubjects(); renderActivities(); closeModal();
+}
+function deleteSubject(){
+  if(!editingSubjectId) return;
+  const s=subjectById(editingSubjectId); if(!s) return;
+  if(!confirm(`Slet fagblokken "${s.name}"? Aktiviteter med faget fjernes også.`)) return;
+  subjects=subjects.filter(x=>x.id!==editingSubjectId);
+  activities=activities.filter(a=>a.subjectId!==editingSubjectId);
+  persistBuilder();renderSubjects();renderActivities();closeModal();
+}
+
+function toLegacySchedule(){
+  const grouped=new Map();
+  const normalized=normalizeActivities(activities);
+  for(const a of normalized){
+    const s=subjectById(a.subjectId); if(!s) continue;
+    const start=START_MIN+a.startSlot*SLOT_MIN;
+    const end=start+a.durationSlots*SLOT_MIN;
+    const time=`${timeText(start)}-${timeText(end)}`;
+    if(!grouped.has(time)){
+      const row={time};
+      DAYS.forEach(d=>row[d]=[]);
+      grouped.set(time,row);
+    }
+    const type=s.type && s.type!=="default" ? s.type : "default";
+    grouped.get(time)[DAYS[a.day]].push({text:s.name,type});
+  }
+  return Array.from(grouped.values()).sort((a,b)=>{
+    const ma=parseInt(a.time.slice(0,2))*60+parseInt(a.time.slice(3,5));
+    const mb=parseInt(b.time.slice(0,2))*60+parseInt(b.time.slice(3,5));
+    return ma-mb;
+  });
+}
+function saveToSchedule(){
+  persistBuilder();
+  localStorage.setItem("schedule", JSON.stringify(toLegacySchedule()));
+  showToast("Skemaet er gemt");
+}
+function clearSchedule(){
+  if(!confirm("Vil du rydde alle aktiviteter i byggeren? Fagblokkene bliver bevaret.")) return;
+  activities=[];persistBuilder();renderActivities();showToast("Skemaet er ryddet");
+}
+
+$("#quickAdd").addEventListener("click",()=>{
+  const val=$("#quickName").value.trim();
+  openSubjectModal(null,val);
+  $("#quickName").value="";
+});
+$("#quickName").addEventListener("keydown",e=>{if(e.key==="Enter")$("#quickAdd").click();});
+$("#saveBtn").addEventListener("click",saveToSchedule);
+$("#clearBtn").addEventListener("click",clearSchedule);
+$("#saveSubjectBtn").addEventListener("click",saveSubject);
+$("#cancelModalBtn").addEventListener("click",closeModal);
+$("#deleteSubjectBtn").addEventListener("click",deleteSubject);
+$("#subjectModal").addEventListener("pointerdown",e=>{if(e.target.id==="subjectModal")closeModal();});
+$("#subjectName").addEventListener("keydown",e=>{if(e.key==="Enter")saveSubject();});
+
+loadState();
+renderSubjects();
+buildGrid();
+</script>
+<script>
+if("serviceWorker" in navigator){
+  window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js"));
+}
+</script>
+</body>
+</html>
